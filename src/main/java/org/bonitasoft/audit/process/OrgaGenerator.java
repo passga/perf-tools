@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
-
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 
@@ -15,13 +14,6 @@ import org.bonitasoft.audit.process.xml.ExportedRole;
 import org.bonitasoft.audit.process.xml.ExportedUser;
 import org.bonitasoft.audit.process.xml.ExportedUserMembership;
 import org.bonitasoft.audit.process.xml.Organization;
-import org.bonitasoft.engine.api.APIClient;
-import org.bonitasoft.engine.api.IdentityAPI;
-import org.bonitasoft.engine.identity.ContactDataCreator;
-import org.bonitasoft.engine.identity.GroupCreator;
-import org.bonitasoft.engine.identity.RoleCreator;
-import org.bonitasoft.engine.identity.User;
-import org.bonitasoft.engine.identity.UserCreator;
 
 public class OrgaGenerator {
 
@@ -174,61 +166,5 @@ public class OrgaGenerator {
     public  void export(File file) throws Exception {
         marshaller.marshal(organization, new File(file, "orga.xml"));
     }
-/*
-    public static void pusblish(APIClient apiClient) throws Exception {
-        IdentityAPI identityAPI = apiClient.getIdentityAPI();
-        for (ExportedGroup group : organization.getGroups()) {
-            identityAPI.createGroup(mapToGroupCreator(group));
-        }
-
-        for (ExportedRole role : organization.getRoles()) {
-            identityAPI.createRole(mapToGroupCreator(role));
-        }
-
-        for (ExportedUser user : managerByUserName.values()) {
-            UserCreator userCreator = mapToUserCreator(user);
-            identityAPI.createUser(userCreator);
-            if(user.getManagerUserName() != null){
-                User user1 = identityAPI.createUser(mapToUserCreator(user));
-                managerIdByUSerName.put(user1.getUserName(),user1.getId());
-                userCreator.setManagerUserId()
-               
-                if(user.get)
-            }
-
-        }
-
-        for (ExportedUser user : organization.getUsers()) {
-            identityAPI.createUser(mapToUserCreator(user));
-
-           
-        }
-    }
-
-    private static UserCreator mapToUserCreator(ExportedUser user) {
-        UserCreator userCreator=new UserCreator(user.getUserName(),user.getPassword());
-        userCreator.setFirstName(user.getFirstName());
-        userCreator.setLastName(user.getLastName());
-        ContactDataCreator contactDataCreator =new ContactDataCreator();
-        contactDataCreator.setAddress(user.getProfessionalAddress());
-        userCreator.setProfessionalContactData(contactDataCreator);
-        userCreator.setManagerUserId(user.getManagerUserName());
-        return  userCreator;
-    }
-
-    private static RoleCreator mapToGroupCreator(ExportedRole role) {
-        RoleCreator roleCreator=new RoleCreator(role.getName());
-        roleCreator.setDisplayName(role.getDisplayName());
-        roleCreator.setDescription(role.getDescription());
-        return roleCreator;
-    }
-
-    private static GroupCreator mapToGroupCreator(ExportedGroup exportedGroup) {
-        GroupCreator groupCreator=new GroupCreator(exportedGroup.getName());
-        groupCreator.setDisplayName(exportedGroup.getDisplayName());
-        groupCreator.setDescription(exportedGroup.getDescription());
-        groupCreator.setParentPath(exportedGroup.getParentPath());
-        return groupCreator;
-    }*/
 
 }
