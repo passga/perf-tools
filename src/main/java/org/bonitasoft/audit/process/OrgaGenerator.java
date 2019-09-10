@@ -4,18 +4,23 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.TreeMap;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 
+import com.bonitasoft.deployer.Deployer;
 import com.devskiller.jfairy.Fairy;
 import org.bonitasoft.audit.process.xml.ExportedGroup;
 import org.bonitasoft.audit.process.xml.ExportedRole;
 import org.bonitasoft.audit.process.xml.ExportedUser;
 import org.bonitasoft.audit.process.xml.ExportedUserMembership;
 import org.bonitasoft.audit.process.xml.Organization;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OrgaGenerator {
+    private static final Logger log = LoggerFactory.getLogger(OrgaGenerator.class);
 
     private static Organization organization = null;
     private static OrgaGenerator orgaGenerator = null;
@@ -32,7 +37,7 @@ public class OrgaGenerator {
         marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
     }
 
-    public static OrgaGenerator createInstance() throws Exception {
+    public static OrgaGenerator getInstance() throws Exception {
         if (orgaGenerator == null) {
             orgaGenerator = new OrgaGenerator();
         }
@@ -40,7 +45,7 @@ public class OrgaGenerator {
     }
 
     public enum Role {
-        MEMBER, RESP, EMPLOYEE
+        MEMBER, RESP, EMPLOYEE,ADMIN
     }
 
 
@@ -49,7 +54,7 @@ public class OrgaGenerator {
     }
 
     public enum Group {
-        BONITA(null, "Bonita", LevelGroup.COMPANY), FRANCE("/Bonita", "France", LevelGroup.COUNTRY), US("/Bonita", "US", LevelGroup.COUNTRY), GRENOBLE("/Bonita/France", "Grenoble", LevelGroup.CITY), SF("/Bonita/US", "San Francisco", LevelGroup.CITY), RD("/Bonita", "R&D", LevelGroup.TEAM), SUPPORT("/Bonita", "Support", LevelGroup.TEAM), HR("/Bonita", "HR", LevelGroup.TEAM);
+        BONITA(null, "Bonita", LevelGroup.COMPANY),  FRANCE("/Bonita", "France", LevelGroup.COUNTRY), US("/Bonita", "US", LevelGroup.COUNTRY), GRENOBLE("/Bonita/France", "Grenoble", LevelGroup.CITY), SF("/Bonita/US", "San Francisco", LevelGroup.CITY), RD("/Bonita", "R&D", LevelGroup.TEAM), SUPPORT("/Bonita", "Support", LevelGroup.TEAM), HR("/Bonita", "HR", LevelGroup.TEAM);
 
         private String parentPath;
         private String displayName;
@@ -73,27 +78,36 @@ public class OrgaGenerator {
         public LevelGroup getLevel() {
             return level;
         }
+
+
     }
 
+    public static Organization getOrganization() {
+        return organization;
+    }
 
     public  OrgaGenerator buildOrganization(int numberUserByTeamGroup) {
+        log.info("Generating organization xml file");
         Arrays.asList(Role.values()).stream().forEach(role -> {
             organization.getRoles().add(createRole(role.name()));
 
         });
 
         ExportedUser theBoss = buildUser(null);
+        theBoss.setUserName("walter.bates");
+        theBoss.setFirstName("walter");
+        theBoss.setLastName("bates");
         organization.getUsers().add(theBoss);
         managerByUserName.put(theBoss.getUserName(),theBoss);
         organization.getMemberships().add(addMemberShip(theBoss.getUserName(), Group.BONITA.getDisplayName(), Group.BONITA.getParentPath(), Role.EMPLOYEE.name()));
+        organization.getMemberships().add(addMemberShip(theBoss.getUserName(), Group.BONITA.getDisplayName(), Group.BONITA.getParentPath(), Role.ADMIN.name()));
 
-
-        Arrays.asList(Group.values()).stream().forEach(group -> {
+        for (Group group : Arrays.asList(Group.values())) {
             organization.getGroups().add(createGroup(group.getDisplayName(), group.getParentPath()));
             if (group.getLevel() == LevelGroup.TEAM) {
                 buildTeamUsersWithMemberShip(numberUserByTeamGroup, group, theBoss.getUserName());
             }
-        });
+        }
 
         return orgaGenerator;
     }
@@ -137,9 +151,10 @@ public class OrgaGenerator {
         ExportedUser exportedUser = new ExportedUser();
         exportedUser.setFirstName(fairy.person().getFirstName());
         exportedUser.setLastName(fairy.person().getLastName());
-        exportedUser.setPassword(fairy.person().getPassword());
+        exportedUser.setPassword("bpm");
         exportedUser.setProfessionalAddress(fairy.person().getEmail());
-        exportedUser.setUserName(fairy.person().getUsername());
+        int i = organization.getUsers().size() + 1;
+        exportedUser.setUserName("userName"+ i) ;
         exportedUser.setManagerUserName(managerUserName);
         return exportedUser;
     }
@@ -163,8 +178,25 @@ public class OrgaGenerator {
         return exportedGroup;
     }
 
+    public ExportedGroup getRandomGroup() {
+        Random random = new Random();
+        return organization.getGroups().get(random.nextInt(organization.getGroups().size()));
+    }
+
+    public ExportedRole getRandomRole() {
+        Random random = new Random();
+        return organization.getRoles().get(random.nextInt(organization.getRoles().size()));
+    }
+
+    public ExportedUser getRandomUser() {
+        Random random = new Random();
+        return organization.getUsers().get(random.nextInt(organization.getUsers().size()));
+    }
+
     public  void export(File file) throws Exception {
-        marshaller.marshal(organization, new File(file, "orga.xml"));
+        File orgaFile = new File(file, "orga.xml");
+        marshaller.marshal(organization, orgaFile);
+        log.info("Organization was exported to xml file {} ", orgaFile);
     }
 
 }
